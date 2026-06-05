@@ -417,7 +417,7 @@
         <button class="tab" onclick="switchTab('submit')">📝 Log Inference</button>
         <button class="tab purple" onclick="switchTab('vault')">🔐 Strategy Vault</button>
         <button class="tab" onclick="switchTab('brain')">🧠 Brain Activity</button>
-        <button class="tab" onclick="switchTab('card')">🪪 ID Card</button>
+        <button class="tab" onclick="switchTab('card')">&#128196; ID Card</button>
     </div>
 
     <!-- LIVE FEED -->
@@ -940,14 +940,18 @@
         // RITUAL IDENTITY CARD
         async function loadRitualCard() {
             const el = document.getElementById("ritual-card-content");
-            if (!window._ritualWalletAddress) {
+            // Get wallet address from signer or stored value
+            let addr = window._ritualWalletAddress;
+            if (!addr && typeof signer !== 'undefined' && signer) {
+                try { addr = await signer.getAddress(); window._ritualWalletAddress = addr; } catch(e) {}
+            }
+            if (!addr) {
                 el.innerHTML = '<div class="state-msg">Connect your wallet to generate your RitualFi Identity Card.</div>';
                 return;
             }
             el.innerHTML = '<div class="state-msg"><div class="spinner"></div><br>Building your identity card...</div>';
 
             try {
-                const addr = window._ritualWalletAddress;
 
                 // Get TX count from Ritual RPC
                 const countHex = await rpcCall("eth_getTransactionCount", [addr, "latest"]);
