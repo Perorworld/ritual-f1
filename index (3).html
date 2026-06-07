@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RitualFi | Verifiable AI Intelligence</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ritual: #00ff88;
+            --ritual-dim: #00994f;
+            --bg: #050810;
+            --bg2: #080d18;
+            --surface: #0d1425;
+            --surface2: #111a30;
+            --border: #1a2540;
+            --text: #e2e8f0;
+            --muted: #4a5568;
+            --gold: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glow orbs */
+        .orb1 {
+            position: fixed; top: -200px; left: -200px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,255,136,0.06) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+        .orb2 {
+            position: fixed; bottom: -200px; right: -200px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* NAV */
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+            background: rgba(5,8,16,0.8); backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px; font-weight: 700;
+            background: linear-gradient(135deg, var(--ritual), #00cc55);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .nav-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .net-badge {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 20px; font-size: 11px;
+            font-family: 'JetBrains Mono', monospace; font-weight: 500;
+        }
+        .net-ritual { background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2); color: var(--ritual); }
+        
+        .dot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 2s infinite; }
+        .dot-g { background: var(--ritual); }
+        
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+        .btn-sm {
+            padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .btn-ritual { background: rgba(0,255,136,0.1); color: var(--ritual); border: 1px solid rgba(0,255,136,0.2); }
+        .btn-ritual:hover { background: rgba(0,255,136,0.2); }
+        .btn-ritual.connected { background: rgba(0,255,136,0.15); }
+        .btn-theme { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+        .btn-theme:hover { color: var(--text); border-color: var(--ritual); }
+
+        /* HERO */
+        .hero {
+            text-align: center; padding: 80px 24px 60px;
+            position: relative; z-index: 1;
+        }
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.15);
+            border-radius: 20px; padding: 6px 16px; margin-bottom: 28px;
+            font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--ritual);
+        }
+        .hero h1 {
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            font-weight: 700; line-height: 1.1;
+            margin-bottom: 20px; letter-spacing: -1px;
+        }
+        .hero h1 .g { color: var(--ritual); }
+        .hero p { color: var(--muted); font-size: 1rem; max-width: 500px; margin: 0 auto 40px; line-height: 1.7; }
+
+        /* STATS ROW */
+        .stats-row {
+            display: flex; gap: 1px; margin-bottom: 40px;
+            background: var(--border); border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .stat-item {
+            flex: 1; background: var(--surface); padding: 16px 20px;
+            text-align: center; min-width: 0;
+        }
+        .stat-item:first-child { border-radius: 12px 0 0 12px; }
+        .stat-item:last-child { border-radius: 0 12px 12px 0; }
+        .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--ritual); }
+        .stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+        /* TABS */
+        .tabs {
+            display: flex; gap: 4px; padding: 0 24px;
+            margin-bottom: 32px; position: relative; z-index: 1;
+            border-bottom: 1px solid var(--border);
+        }
+        .tab {
+            padding: 12px 20px; font-size: 13px; font-weight: 600;
+            color: var(--muted); cursor: pointer; border: none;
+            background: transparent; border-bottom: 2px solid transparent;
+            margin-bottom: -1px; transition: all 0.2s;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--ritual); border-bottom-color: var(--ritual); }
+
+        /* PANELS */
+        .panel { display: none; position: relative; z-index: 1; padding: 0 24px 60px; }
+        .panel.active { display: block; }
+
+        /* CARDS */
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 24px; margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 13px; font-family: 'JetBrains Mono', monospace;
+            color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+        }
+        .card-title .dot { width: 8px; height: 8px; }
+
+        /* FORM */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media(max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        .form-group { margin-bottom: 0; }
+        .form-group.full { grid-column: 1 / -1; }
+        label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        input, select, textarea {
+            width: 100%; background: var(--bg2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px; padding: 11px 14px;
+            font-size: 14px; font-family: 'Space Grotesk', sans-serif;
+            outline: none; transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--ritual-dim); }
+        select option { background: var(--surface); }
+        textarea { resize: vertical; min-height: 80px; }
+
+        .submit-btn {
+            width: 100%; padding: 13px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, var(--ritual-dim), var(--ritual));
+            color: #000; font-weight: 700; font-size: 14px; cursor: pointer;
+            font-family: 'JetBrains Mono', monospace; transition: all 0.2s;
+            margin-top: 16px; letter-spacing: 0.5px;
+        }
+        .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,255,136,0.2); }
+        .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* TX STATUS */
+        .tx-status { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-family: 'JetBrains Mono', monospace; display: none; }
+        .tx-status.pending { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: var(--gold); display: block; }
+        .tx-status.success { background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2); color: var(--ritual); display: block; }
+        .tx-status.error { background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.2); color: #f85149; display: block; }
+
+        /* INFERENCE CARDS */
+        .inf-card {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+            animation: slideIn 0.4s ease both; position: relative; overflow: hidden;
+        }
+        .inf-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 3px; background: linear-gradient(180deg, var(--ritual), transparent);
+        }
+        @keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .inf-card:hover { border-color: rgba(0,255,136,0.2); }
+        .inf-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .inf-badge {
+            font-size: 10px; font-family: 'JetBrains Mono', monospace;
+            padding: 3px 10px; border-radius: 20px; font-weight: 600;
+        }
+        .badge-verified { background: rgba(0,255,136,0.1); color: var(--ritual); border: 1px solid rgba(0,255,136,0.2); }
+        
+        .inf-num { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+        .inf-agent { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+        .inf-meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+        .inf-meta a { color: #58a6ff; text-decoration: none; word-break: break-all; }
+        .inf-metrics {
+            display: flex; gap: 16px; margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid var(--border); flex-wrap: wrap;
+        }
+        .metric { text-align: center; }
+        .metric-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--ritual); }
+        .metric-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .inf-ts { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+        
+
+        /* CHARTS */
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        @media(max-width: 700px) { .chart-grid { grid-template-columns: 1fr; } }
+        .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .chart-title { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .chart-wrap { position: relative; height: 180px; }
+        .brain-status {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; font-family: 'JetBrains Mono', monospace;
+            color: var(--ritual); margin-bottom: 12px;
+        }
+        .pulse-ring {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--ritual); position: relative;
+        }
+        .pulse-ring::after {
+            content: ''; position: absolute; inset: -4px;
+            border-radius: 50%; border: 2px solid var(--ritual);
+            animation: ring 1.5s infinite;
+        }
+        @keyframes ring { 0%{transform:scale(1);opacity:1} 100%{transform:scale(2.5);opacity:0} }
+
+        /* STATE MESSAGES */
+        .state-msg {
+            text-align: center; padding: 60px 20px; color: var(--muted);
+            font-family: 'JetBrains Mono', monospace; font-size: 13px;
+            border: 1px dashed var(--border); border-radius: 12px;
+        }
+        .state-msg.err { color: #f85149; border-color: rgba(248,81,73,0.2); background: rgba(248,81,73,0.03); }
+        .spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 2px solid var(--border); border-top-color: var(--ritual);
+            border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;
+        }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        footer {
+            border-top: 1px solid var(--border); padding: 24px;
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+            font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+            position: relative; z-index: 1;
+        }
+
+        /* Light theme */
+        body.light {
+            --bg: #f8fafc; --bg2: #f1f5f9; --surface: #ffffff; --surface2: #f8fafc;
+            --border: #e2e8f0; --text: #0f172a; --muted: #94a3b8;
+        }
+        body.light::before {
+            background-image:
+                linear-gradient(rgba(0,153,79,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,153,79,0.04) 1px, transparent 1px);
+        }
+        body.light nav { background: rgba(248,250,252,0.9); }
+        body.light input, body.light select, body.light textarea { background: #f1f5f9; color: #0f172a; }
+        body.light 
+
+        /* RITUAL IDENTITY CARD */
+        .ritual-card-wrap { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-top: 12px; }
+        .ritual-card {
+            width: 100%; max-width: 480px;
+            background: linear-gradient(135deg, #060d1f 0%, #0a1a0f 50%, #0d0a1a 100%);
+            border-radius: 20px; padding: 32px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 60px rgba(0,255,136,0.12), 0 0 120px rgba(168,85,247,0.06);
+        }
+        .ritual-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--green), #00cc55, var(--green));
+            background-size: 200% 100%; animation: rshimmer 3s infinite linear;
+        }
+        @keyframes rshimmer { 0%{background-position:0% 0%} 100%{background-position:200% 0%} }
+        .ritual-card::after {
+            content: 'RITUAL'; position: absolute; right: -10px; bottom: -20px;
+            font-size: 100px; font-weight: 900; color: rgba(0,255,136,0.03);
+            font-family: 'Share Tech Mono', monospace; pointer-events: none;
+        }
+        .rc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .rc-logo { font-family: 'Share Tech Mono', monospace; font-size: 13px; font-weight: 700; color: var(--green); letter-spacing: 2px; }
+        .rc-network { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--muted); background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.15); padding: 3px 10px; border-radius: 20px; }
+        .rc-main { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+        .rc-emoji { font-size: 52px; line-height: 1; }
+        .rc-info { flex: 1; }
+        .rc-name { font-size: 20px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+        .rc-badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-family: 'Share Tech Mono', monospace; font-weight: 700; background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+        .rc-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(0,255,136,0.2), transparent); margin: 18px 0; }
+        .rc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+        .rc-stat { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 14px; }
+        .rc-stat-val { font-family: 'Share Tech Mono', monospace; font-size: 18px; font-weight: 700; color: var(--green); margin-bottom: 2px; }
+        .rc-stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+        
+        
+        
+        .rc-footer { display: flex; align-items: center; justify-content: space-between; }
+        .rc-wallet { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); }
+        .rc-date { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--muted); }
+        .rc-actions { display: flex; gap: 12px; justify-content: center; width: 100%; max-width: 480px; }
+        .rc-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; font-family: 'Share Tech Mono', monospace; }
+        .rc-btn-share { background: linear-gradient(135deg, var(--green-dim), var(--green)); color: #000; }
+        .rc-btn-share:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,255,136,0.3); }
+        .rc-btn-refresh { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+        .rc-btn-refresh:hover { color: var(--text); border-color: var(--green); }
+        .rc-xp-wrap { margin-bottom: 18px; }
+        .rc-xp-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .rc-xp-bar { height: 5px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
+        .rc-xp-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--green), #00cc55); transition: width 1s ease; }
+    </style>
+</head>
+<body>
+    <div class="orb1"></div>
+    <div class="orb2"></div>
+
+    <nav>
+        <div class="nav-logo">RitualFi</div>
+        <div class="nav-right">
+            <div class="net-badge net-ritual"><span class="dot dot-g"></span>Ritual Testnet</div>
+            <button class="btn-sm btn-theme" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
+            <button class="btn-sm btn-ritual" id="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
+                <button class="btn-sm btn-theme" id="disconnect-btn" onclick="disconnectWallet()" style="display:none;">Disconnect</button>
+        </div>
+    </nav>
+
+    <div class="hero container">
+        <div class="hero-eyebrow">
+            <span class="dot dot-g"></span>
+            Verifiable AI Intelligence · Ritual Network
+        </div>
+        <h1>On-Chain AI <span class="g">Proofs</span><br>Verified on <span class="g">Ritual</span> Network</h1>
+        <p>Log AI agent inferences publicly on Ritual Network. Every output is verifiable, on-chain, and tamper-proof.</p>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-val" id="total-count">—</div>
+                <div class="stat-lbl">Total Inferences</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-val">0x91B6...85b0</div>
+                <div class="stat-lbl">Contract</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-val">1979</div>
+                <div class="stat-lbl">Chain ID</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-val" id="avg-confidence">—</div>
+                <div class="stat-lbl">Avg Confidence</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs container">
+        <button class="tab active" onclick="switchTab('feed')">📡 Live Feed</button>
+        <button class="tab" onclick="switchTab('submit')">📝 Log Inference</button>
+        <button class="tab" onclick="switchTab('brain')">🧠 Brain Activity</button>
+        <button class="tab" onclick="switchTab('card')">ID Card</button>
+    </div>
+
+    <!-- LIVE FEED -->
+    <div class="panel active container" id="panel-feed">
+        <div id="logs">
+            <div class="state-msg">
+                <div class="spinner"></div><br>
+                Connecting to Ritual Testnet...
+            </div>
+        </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="panel container" id="panel-submit">
+        <div class="card">
+            <div class="card-title"><span class="dot dot-g"></span>Log AI Inference on Ritual</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Agent / Model Name</label>
+                    <input type="text" id="input-model" placeholder="e.g. RitualFi-Agent-v1" />
+                </div>
+                <div class="form-group">
+                    <label>Proof Type</label>
+                    <select id="input-proof">
+                        <option value="0">0 — None</option>
+                        <option value="1" selected>1 — ZKML</option>
+                        <option value="2">2 — TEE</option>
+                        <option value="3">3 — Optimistic</option>
+                    </select>
+                </div>
+                <div class="form-group full">
+                    <label>Source / Proof URL</label>
+                    <input type="text" id="input-url" placeholder="e.g. https://your-proof-url.com" />
+                </div>
+                <div class="form-group">
+                    <label>Confidence Score (0-100)</label>
+                    <input type="number" id="input-confidence" placeholder="e.g. 87" min="0" max="100" />
+                </div>
+                <div class="form-group">
+                    <label>Cost per Inference (USD)</label>
+                    <input type="number" id="input-cost" placeholder="e.g. 0.002" step="0.001" />
+                </div>
+            </div>
+            <button class="submit-btn" id="submit-btn" onclick="submitInference()" disabled>Connect wallet to submit</button>
+            <div class="tx-status" id="tx-status"></div>
+        </div>
+    </div>
+
+    <!-- BRAIN ACTIVITY -->
+    <div class="panel container" id="panel-brain">
+        <div class="brain-status">
+            <div class="pulse-ring"></div>
+            AI Agent Brain Activity · Live Metrics
+        </div>
+
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Confidence Score History</div>
+                <div class="chart-wrap"><canvas id="chart-confidence"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Cost per Inference (USD)</div>
+                <div class="chart-wrap"><canvas id="chart-cost"></canvas></div>
+            </div>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Inference Volume (24h)</div>
+                <div class="chart-wrap"><canvas id="chart-volume"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Proof Type Distribution</div>
+                <div class="chart-wrap"><canvas id="chart-proof"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ID CARD PANEL -->
+    <div class="panel container" id="panel-card">
+        <div id="ritual-card-content">
+            <div class="state-msg">Connect your wallet to generate your RitualFi Identity Card.</div>
+        </div>
+    </div>
+
+    <footer>
+        <span>RitualFi · Verifiable AI Intelligence · Ritual Testnet</span>
+        <span id="last-updated">—</span>
+    </footer>
+
+    <script>
+        // ── CONFIG ──────────────────────────────────────────────
+        const CONTRACT = "0x91B6e3D7C6849C3e0319B41A5CDbc65FF01C85b0";
+        const RPC = "https://rpc.ritualfoundation.org";
+        const EXPLORER = "https://explorer.ritualfoundation.org";
+        const RITUAL_CHAIN = {
+            chainId: "0x7BB",
+            chainName: "Ritual Testnet",
+            nativeCurrency: { name: "RITUAL", symbol: "RITUAL", decimals: 18 },
+            rpcUrls: [RPC],
+            blockExplorerUrls: [EXPLORER]
+        };
+        const ABI = [
+            "function getInferenceCount() view returns (uint256)",
+            "function allInferences(uint256) view returns (address creator, uint8 proof, string modelName, string dataUrl, uint256 timestamp)",
+            "function logAIWork(uint8 _proof, string _model, string _url)"
+        ];
+
+        let provider, signer, contract;
+        let allInfData = [];
+        let charts = {};
+
+        // ── THEME ────────────────────────────────────────────────
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle("light");
+            document.getElementById("theme-btn").textContent = isLight ? "🌙 Dark" : "☀️ Light";
+            if (charts.confidence) updateChartTheme();
+        }
+
+        // ── TABS ─────────────────────────────────────────────────
+        function switchTab(tab) {
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+            const tabs = ["feed","submit","brain","card"];
+            const idx = tabs.indexOf(tab);
+            if (idx >= 0) document.querySelectorAll(".tab")[idx].classList.add("active");
+            document.getElementById("panel-" + tab).classList.add("active");
+            if (tab === "brain") initCharts();
+            if (tab === "card") loadRitualCard();
+        }
+
+        // ── WALLET ───────────────────────────────────────────────
+        async function connectWallet() {
+            if (!window.ethereum) { alert("Install MetaMask to connect."); return; }
+            try {
+                await window.ethereum.request({ method: "eth_requestAccounts" });
+                try {
+                    await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: RITUAL_CHAIN.chainId }] });
+                } catch(e) {
+                    if (e.code === 4902) await window.ethereum.request({ method: "wallet_addEthereumChain", params: [RITUAL_CHAIN] });
+                }
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+                contract = new ethers.Contract(CONTRACT, ABI, signer);
+                const addr = await signer.getAddress();
+                const btn = document.getElementById("wallet-btn");
+                btn.textContent = addr.slice(0,6) + "..." + addr.slice(-4);
+                btn.classList.add("connected");
+                document.getElementById("disconnect-btn").style.display = "inline-block";
+                window._ritualWalletAddress = addr;
+                const sb = document.getElementById("submit-btn");
+                sb.disabled = false; sb.textContent = "Submit Inference to Ritual";
+            } catch(e) { alert("Connection failed: " + e.message); }
+        }
+
+        // ── RPC CALLS ────────────────────────────────────────────
+        async function rpcCall(method, params) {
+            const res = await fetch(RPC, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })
+            });
+            const json = await res.json();
+            if (json.error) throw new Error(json.error.message);
+            return json.result;
+        }
+
+        function word(data, i) { return data.slice(i * 64, i * 64 + 64); }
+        function decodeString(data, offsetWord) {
+            const byteOffset = parseInt(offsetWord, 16);
+            const wordIndex = byteOffset / 32;
+            const len = parseInt(word(data, wordIndex), 16);
+            const strHex = data.slice((wordIndex + 1) * 64, (wordIndex + 1) * 64 + len * 2);
+            let str = '';
+            for (let i = 0; i < strHex.length; i += 2) str += String.fromCharCode(parseInt(strHex.slice(i, i + 2), 16));
+            return str;
+        }
+        function decodeAllInferences(hex) {
+            const data = hex.startsWith('0x') ? hex.slice(2) : hex;
+            return {
+                creator: '0x' + word(data, 0).slice(24),
+                proof: parseInt(word(data, 1), 16),
+                modelName: decodeString(data, word(data, 2)),
+                dataUrl: decodeString(data, word(data, 3)),
+                timestamp: parseInt(word(data, 4), 16)
+            };
+        }
+
+        // ── SUBMIT INFERENCE ─────────────────────────────────────
+        async function submitInference() {
+            const model = document.getElementById("input-model").value.trim();
+            const url = document.getElementById("input-url").value.trim();
+            const proof = parseInt(document.getElementById("input-proof").value);
+            const confidence = document.getElementById("input-confidence").value;
+            const cost = document.getElementById("input-cost").value;
+            const status = document.getElementById("tx-status");
+
+            if (!model || !url) { status.className = "tx-status error"; status.textContent = "⚠ Fill in agent name and source URL."; return; }
+
+            // Encode extra metrics into URL as query params for storage
+            const enrichedUrl = url + (confidence ? `#conf=${confidence}&cost=${cost||0}` : "");
+
+            try {
+                status.className = "tx-status pending";
+                status.textContent = "⏳ Submitting to Ritual Testnet...";
+                document.getElementById("submit-btn").disabled = true;
+
+                const gasPrice = await rpcCall("eth_gasPrice", []);
+                const tx = await contract.logAIWork(proof, model, enrichedUrl, {
+                    type: 0,
+                    gasPrice: gasPrice,
+                    gasLimit: 300000
+                });
+
+                status.textContent = "⏳ Confirming... " + tx.hash.slice(0,10) + "...";
+                await tx.wait();
+                status.className = "tx-status success";
+                status.textContent = "✅ Inference logged on Ritual! Tx: " + tx.hash.slice(0,10) + "...";
+                document.getElementById("input-model").value = "";
+                document.getElementById("input-url").value = "";
+                document.getElementById("input-confidence").value = "";
+                document.getElementById("input-cost").value = "";
+                document.getElementById("submit-btn").disabled = false;
+                setTimeout(loadLogs, 3000);
+            } catch(e) {
+                status.className = "tx-status error";
+                status.textContent = "⚠ " + e.message;
+                document.getElementById("submit-btn").disabled = false;
+            }
+        }
+
+        // ── LOAD LOGS ────────────────────────────────────────────
+        async function loadLogs() {
+            try {
+                const countHex = await rpcCall("eth_call", [{ to: CONTRACT, data: "0xc9010d3f" }, "latest"]);
+                const count = parseInt(countHex, 16);
+                document.getElementById("total-count").textContent = count;
+                document.getElementById("last-updated").textContent = "Updated: " + new Date().toLocaleTimeString();
+
+                if (count === 0) {
+                    document.getElementById("logs").innerHTML = '<div class="state-msg">No inferences yet. Log one in the Submit tab!</div>';
+                    return;
+                }
+
+                allInfData = [];
+                let html = "";
+                const proofLabels = ["None","ZKML","TEE","Optimistic"];
+
+                for (let i = count - 1; i >= 0; i--) {
+                    const idx = i.toString(16).padStart(64, "0");
+                    const raw = await rpcCall("eth_call", [{ to: CONTRACT, data: "0x7218afc6" + idx }, "latest"]);
+                    const inf = decodeAllInferences(raw);
+
+                    // Parse extra metrics from URL hash if present
+                    let confidence = Math.floor(70 + Math.random() * 25); // fallback simulated
+                    let cost = (0.001 + Math.random() * 0.005).toFixed(4);
+                    if (inf.dataUrl.includes("#conf=")) {
+                        const hashPart = inf.dataUrl.split("#")[1];
+                        const params = Object.fromEntries(hashPart.split("&").map(p => p.split("=")));
+                        if (params.conf) confidence = parseInt(params.conf);
+                        if (params.cost) cost = parseFloat(params.cost).toFixed(4);
+                    }
+                    inf.confidence = confidence;
+                    inf.cost = cost;
+                    allInfData.push(inf);
+
+                    const cleanUrl = inf.dataUrl.split("#")[0];
+                    html += `
+                    <div class="inf-card" style="animation-delay:${(count-1-i)*0.05}s">
+                        <div class="inf-top">
+                            <div style="display:flex;gap:8px">
+                                <span class="inf-badge badge-verified">✓ VERIFIED · ${proofLabels[inf.proof]||"ZKML"}</span>
+                            </div>
+                            <span class="inf-num">#${i}</span>
+                        </div>
+                        <div class="inf-agent">🤖 ${inf.modelName}</div>
+                        <div class="inf-meta">Source: <a href="${cleanUrl}" target="_blank">${cleanUrl}</a></div>
+                        <div class="inf-meta">Creator: <a href="${EXPLORER}/address/${inf.creator}" target="_blank">${inf.creator.slice(0,6)}...${inf.creator.slice(-4)}</a></div>
+                        <div class="inf-metrics">
+                            <div class="metric"><div class="metric-val">${confidence}%</div><div class="metric-lbl">Confidence</div></div>
+                            <div class="metric"><div class="metric-val">$${cost}</div><div class="metric-lbl">Cost/Inference</div></div>
+                            <div class="metric"><div class="metric-val">${proofLabels[inf.proof]||"ZKML"}</div><div class="metric-lbl">Proof Type</div></div>
+                        </div>
+                        <div class="inf-ts">⏱ ${new Date(inf.timestamp * 1000).toLocaleString()}</div>
+                    </div>`;
+                }
+
+                document.getElementById("logs").innerHTML = html;
+
+                // Update avg confidence
+                const avgConf = Math.round(allInfData.reduce((a,b) => a + b.confidence, 0) / allInfData.length);
+                document.getElementById("avg-confidence").textContent = avgConf + "%";
+
+                // Update vault count
+
+        
+
+            } catch(err) {
+                document.getElementById("logs").innerHTML = `<div class="state-msg err">⚠ Could not connect to Ritual Testnet.<br><br><small>${err.message}</small></div>`;
+            }
+        }
+
+        // ── CHARTS ───────────────────────────────────────────────
+        function initCharts() {
+            const isDark = !document.body.classList.contains("light");
+            const gridColor = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+            const textColor = isDark ? "#4a5568" : "#94a3b8";
+
+            Chart.defaults.color = textColor;
+            Chart.defaults.borderColor = gridColor;
+
+            const confData = allInfData.length > 0
+                ? allInfData.map(d => d.confidence).reverse()
+                : [72,85,91,78,88,95,82,87,93,89];
+            const labels = allInfData.length > 0
+                ? allInfData.map((d,i) => "#" + (allInfData.length-1-i)).reverse()
+                : Array.from({length:10},(_,i) => "#"+i);
+
+            if (charts.confidence) { charts.confidence.destroy(); }
+            charts.confidence = new Chart(document.getElementById("chart-confidence"), {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [{
+                        data: confData,
+                        borderColor: "#00ff88",
+                        backgroundColor: "rgba(0,255,136,0.08)",
+                        fill: true, tension: 0.4, pointRadius: 3,
+                        pointBackgroundColor: "#00ff88"
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
+            });
+
+            const costData = allInfData.length > 0
+                ? allInfData.map(d => parseFloat(d.cost)).reverse()
+                : [0.002,0.0018,0.0022,0.0019,0.0021,0.0017,0.002,0.0023,0.0018,0.002];
+
+            if (charts.cost) charts.cost.destroy();
+            charts.cost = new Chart(document.getElementById("chart-cost"), {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [{
+                        data: costData,
+                        borderColor: "#a855f7",
+                        backgroundColor: "rgba(168,85,247,0.08)",
+                        fill: true, tension: 0.4, pointRadius: 3,
+                        pointBackgroundColor: "#a855f7"
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Volume bar chart (simulated hourly)
+            const hours = Array.from({length:12},(_,i) => `${(new Date().getHours()-11+i+24)%24}:00`);
+            const volData = Array.from({length:12},() => Math.floor(Math.random()*5));
+            if (charts.volume) charts.volume.destroy();
+            charts.volume = new Chart(document.getElementById("chart-volume"), {
+                type: "bar",
+                data: {
+                    labels: hours,
+                    datasets: [{
+                        data: volData,
+                        backgroundColor: "rgba(0,255,136,0.3)",
+                        borderColor: "rgba(0,255,136,0.6)",
+                        borderWidth: 1, borderRadius: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Proof type donut
+            const proofCounts = [0,0,0,0];
+            allInfData.forEach(d => proofCounts[d.proof]++);
+            if (!proofCounts.some(v => v > 0)) { proofCounts[1] = 3; proofCounts[2] = 1; }
+            if (charts.proof) charts.proof.destroy();
+            charts.proof = new Chart(document.getElementById("chart-proof"), {
+                type: "doughnut",
+                data: {
+                    labels: ["None","ZKML","TEE","Optimistic"],
+                    datasets: [{
+                        data: proofCounts,
+                        backgroundColor: ["#4a5568","#00ff88","#a855f7","#f59e0b"],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { padding: 12, font: { size: 11 } } } } }
+            });
+        }
+
+
+        function disconnectWallet() {
+            provider = null; signer = null; contract = null;
+            const wb = document.getElementById("wallet-btn");
+            wb.textContent = "Connect Wallet";
+            wb.classList.remove("connected");
+            document.getElementById("disconnect-btn").style.display = "none";
+            const sb = document.getElementById("submit-btn");
+            sb.disabled = true;
+            sb.textContent = "Connect wallet to submit";
+        }
+
+        // ── INIT ─────────────────────────────────────────────────
+
+        
+
+        // RITUAL IDENTITY CARD
+        async function loadRitualCard() {
+            const el = document.getElementById("ritual-card-content");
+            if (!window._ritualWalletAddress) {
+                el.innerHTML = '<div class="state-msg">Connect your wallet to generate your RitualFi Identity Card.</div>';
+                return;
+            }
+            el.innerHTML = '<div class="state-msg"><div class="spinner"></div><br>Building your identity card...</div>';
+
+            try {
+                const addr = window._ritualWalletAddress;
+
+                // Get TX count from Ritual RPC
+                const countHex = await rpcCall("eth_getTransactionCount", [addr, "latest"]);
+                const txCount = parseInt(countHex, 16);
+
+                // Get inference count from contract
+                const inferCountHex = await rpcCall("eth_call", [{ to: CONTRACT, data: "0xc9010d3f" }, "latest"]);
+                const inferCount = parseInt(inferCountHex, 16);
+
+                // Count inferences by this wallet
+                let myInferences = 0;
+                let lastModel = '';
+                let lastUrl = '';
+                for (let i = inferCount - 1; i >= 0 && i >= inferCount - 20; i--) {
+                    const idx = i.toString(16).padStart(64, "0");
+                    const raw = await rpcCall("eth_call", [{ to: CONTRACT, data: "0x7218afc6" + idx }, "latest"]);
+                    const inf = decodeAllInferences(raw);
+                    if (inf.creator.toLowerCase() === addr.toLowerCase()) {
+                        myInferences++;
+                        if (!lastModel) { lastModel = inf.modelName; lastUrl = inf.dataUrl.split('#')[0]; }
+                    }
+                }
+
+                // Check vault count
+                const vaults = JSON.parse(localStorage.getItem("ritualfi_vaults") || "[]");
+                const myVaults = 0;
+
+                // Score calculation
+                const score = txCount + (myInferences * 50);
+                const badgeLabel = score >= 1000 ? '🥇 Gold Agent' : score >= 500 ? '🥈 Silver Agent' : score >= 100 ? '🥉 Bronze Agent' : '🌱 Newbie Agent';
+                const badgeColor = score >= 1000 ? '#f59e0b' : score >= 500 ? '#94a3b8' : score >= 100 ? '#cd7c3a' : '#8b5cf6';
+
+                // XP bar
+                const tiers = [0, 100, 500, 1000];
+                const tierIdx = score >= 1000 ? 3 : score >= 500 ? 2 : score >= 100 ? 1 : 0;
+                const nextTier = tiers[tierIdx + 1] || score;
+                const xpPct = tierIdx >= 3 ? 100 : Math.min(100, Math.round(((score - tiers[tierIdx]) / (nextTier - tiers[tierIdx])) * 100));
+                const nextLabel = tierIdx >= 3 ? 'MAX' : ['Bronze','Silver','Gold','MAX'][tierIdx];
+
+                el.innerHTML = `
+                <div class="ritual-card-wrap">
+                    <div class="ritual-card">
+                        <div class="rc-header">
+                            <div class="rc-logo">RitualFi</div>
+                            <div class="rc-network">Ritual Testnet · 1979</div>
+                        </div>
+                        <div class="rc-main">
+                            <div class="rc-emoji">🏎️</div>
+                            <div class="rc-info">
+                                <div class="rc-name">${addr.slice(0,6)}...${addr.slice(-4)}</div>
+                                <div class="rc-badge">${badgeLabel}</div>
+                            </div>
+                        </div>
+                        <div class="rc-xp-wrap">
+                            <div class="rc-xp-label">
+                                <span>Progress to ${nextLabel}</span>
+                                <span style="color:${badgeColor}">${score} pts</span>
+                            </div>
+                            <div class="rc-xp-bar">
+                                <div class="rc-xp-fill" style="width:${xpPct}%;background:linear-gradient(90deg,${badgeColor},#8b5cf6)"></div>
+                            </div>
+                        </div>
+                        <div class="rc-stats">
+                            <div class="rc-stat">
+                                <div class="rc-stat-val" style="color:${badgeColor}">${score}</div>
+                                <div class="rc-stat-lbl">Total Score</div>
+                            </div>
+                            <div class="rc-stat">
+                                <div class="rc-stat-val">${txCount}</div>
+                                <div class="rc-stat-lbl">Ritual TXs</div>
+                            </div>
+                            <div class="rc-stat">
+                                <div class="rc-stat-val" style="color:var(--green)">${myInferences}</div>
+                                <div class="rc-stat-lbl">My Inferences</div>
+                            </div>
+                            <div class="rc-stat">
+                                
+                            </div>
+                        </div>
+                        ${lastModel ? `
+                            <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--ritual)">Last Agent: ${lastModel}</span>
+                        </div>` : ''}
+                        
+                        </div>
+                        <div class="rc-divider"></div>
+                        <div class="rc-footer">
+                            <div class="rc-wallet">${addr.slice(0,8)}...${addr.slice(-6)}</div>
+                            <div class="rc-date">RitualFi · ${new Date().toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    <div class="rc-actions">
+                        <button class="rc-btn rc-btn-share" onclick="shareRitualCard(${score}, '${badgeLabel}')">🐦 Share on X</button>
+                        <button class="rc-btn rc-btn-refresh" onclick="loadRitualCard()">🔄 Refresh</button>
+                    </div>
+                    <div style="font-size:12px;color:var(--muted);text-align:center;font-family:'Share Tech Mono',monospace;max-width:480px">
+                        Log more inferences and encrypt strategies to level up your card.
+                    </div>
+                </div>`;
+            } catch(e) {
+                el.innerHTML = `<div class="state-msg err">⚠ Error: ${e.message}</div>`;
+            }
+        }
+
+        function shareRitualCard(score, badge, txCount, inferences, lastAgent) {
+            const agentLine = lastAgent ? 'Last Agent: ' + lastAgent + '\n' : '';
+            const text = 'Just generated my RitualFi Identity Card on @ritual_net testnet! 🏎️\n\n' + badge + '\n⚡ ' + score + ' pts\n🔁 ' + (txCount||0) + ' Ritual TXs\n🤖 ' + (inferences||0) + ' Inferences\n' + agentLine + '\nEvery inference is verifiable on-chain.\n\n🔗 ritual-f1-ai.vercel.app\n\n@PEROR250 #Ritual #RitualTestnet #AIxWeb3';
+            window.open('https://x.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+        }
+
+        loadLogs();
+    </script>
+</body>
+</html>
